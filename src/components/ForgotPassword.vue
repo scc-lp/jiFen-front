@@ -8,7 +8,7 @@
         <van-field v-model="username" name="username" label="用户名" placeholder="请输入用户名" 
           :rules="[{ required: true, message: '请输入用户名' }]" />
         <van-field v-model="newPassword" name="newPassword" label="新密码" placeholder="请输入新密码" type="password" 
-          :rules="[{ required: true, message: '请输入新密码' }, { min: 6, message: '密码长度至少6位' }]" />
+          :rules="[{ required: true, message: '请输入新密码' }]" />
         <van-field v-model="confirmPassword" name="confirmPassword" label="确认新密码" placeholder="请再次输入新密码" type="password" 
           :rules="[{ required: true, message: '请确认新密码' }, { validator: validateConfirmPassword, message: '两次输入的密码不一致' }]" />
         <div class="form-actions">

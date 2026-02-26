@@ -152,10 +152,10 @@ const fetchRooms = async (isLoadMore = false) => {
     if (response.success && response.data) {
       if (isLoadMore) {
         // 加载更多，追加数据
-        rooms.value = [...rooms.value, ...(response.data.rooms || [])];
+        rooms.value = [...rooms.value, ...(response.data.rooms as RoomInfo[] || [])];
       } else {
         // 首次加载，替换数据
-        rooms.value = response.data.rooms || [];
+        rooms.value = (response.data.rooms as RoomInfo[]) || [];
       }
       total.value = response.data.total || 0;
       page.value++;
