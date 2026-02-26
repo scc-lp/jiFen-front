@@ -83,14 +83,10 @@
             <van-empty description="暂无分数记录" />
           </div>
 
-          <div v-else class="history-item" v-for="record in scoreHistory" :key="record.id">
+          <div v-else class="history-item" v-for="record in scoreHistory.filter(r => r.score_change > 0)" :key="record.id">
             <div class="history-info">
-              <p v-if="record.giver_name && record.score_change > 0">{{ record.giver_name }} 给 {{ record.player_name }} {{ record.score_change > 0 ? '+' : '' }}{{ record.score_change }}分</p>
-              <p v-else>{{ record.player_name }} {{ record.score_change > 0 ? '+' : '' }}{{ record.score_change }}分</p>
+              <p v-if="record.giver_name">{{ record.giver_name }} 给 {{ record.player_name }} {{ record.score_change }}分</p>
               <p class="time">{{ formatDateTime(record.created_at) }}</p>
-            </div>
-            <div class="history-score">
-              当前分数: {{ record.current_score }}
             </div>
           </div>
         </div>
@@ -124,13 +120,36 @@
         </div>
       </div>
     </van-popup>
+
+    <!-- 确认结束弹窗 -->
+    <van-popup v-if="mode !== 'view'" v-model:show="confirmEndDialogVisible" round position="center" :style="{ width: '80%' }">
+      <div class="score-dialog">
+        <h3>确认结束</h3>
+        <p class="dialog-message">确定要结束记分吗？结束后房间将无法继续记分。</p>
+        <div class="dialog-actions">
+          <van-button type="default" block @click="confirmEndDialogVisible = false">取消</van-button>
+          <van-button type="primary" block @click="confirmEndRoom">确认</van-button>
+        </div>
+      </div>
+    </van-popup>
+
+    <!-- 确认离开弹窗 -->
+    <van-popup v-if="mode !== 'view'" v-model:show="confirmLeaveDialogVisible" round position="center" :style="{ width: '80%' }">
+      <div class="score-dialog">
+        <h3>确认离开</h3>
+        <p class="dialog-message">确定要离开该房间吗？离开后可以再次加入。</p>
+        <div class="dialog-actions">
+          <van-button type="default" block @click="confirmLeaveDialogVisible = false">取消</van-button>
+          <van-button type="primary" block @click="confirmLeaveRoom">确认</van-button>
+        </div>
+      </div>
+    </van-popup>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { showDialog } from 'vant';
 import { toast } from '../utils/toast';
 import { io } from 'socket.io-client';
 import { roomApi } from '../api/room';
@@ -194,6 +213,8 @@ const socket = ref<any>(null);
 // 给分弹窗相关状态
 const scoreDialogVisible = ref(false);
 const batchScoreDialogVisible = ref(false);
+const confirmEndDialogVisible = ref(false);
+const confirmLeaveDialogVisible = ref(false);
 const selectedPlayerId = ref(0);
 const selectedPlayerName = ref('');
 const scoreInput = ref('');
@@ -520,59 +541,57 @@ onMounted(async () => {
 
 // 结束记分
 const endRoom = async () => {
+  confirmEndDialogVisible.value = true;
+};
+
+// 确认结束房间
+const confirmEndRoom = async () => {
   try {
-    showDialog({
-      title: '确认结束',
-      message: '确定要结束记分吗？结束后房间将无法继续记分。',
-      showCancelButton: true
-    }).then(async (action) => {
-      if (action === 'confirm') {
-        const response = await roomApi.endRoom(Number(roomId.value));
-        if (response.success) {
-          toast.success('记分已结束');
-          // 跳转到首页
-          router.push('/home');
-        } else {
-          toast.error(response.message || '结束记分失败');
-        }
-      }
-    });
+    const response = await roomApi.endRoom(Number(roomId.value));
+    if (response.success) {
+      toast.success('记分已结束');
+      // 跳转到首页
+      router.push('/home');
+    } else {
+      toast.error(response.message || '结束记分失败');
+    }
   } catch (error: any) {
     toast.error(error.message || '网络错误');
+  } finally {
+    confirmEndDialogVisible.value = false;
   }
 };
 
 // 离开房间
 const leaveRoom = async () => {
+  confirmLeaveDialogVisible.value = true;
+};
+
+// 确认离开房间
+const confirmLeaveRoom = async () => {
   try {
-    showDialog({
-      title: '确认离开',
-      message: '确定要离开该房间吗？离开后可以再次加入。',
-      showCancelButton: true
-    }).then(async (action) => {
-      if (action === 'confirm') {
-        // 找到当前用户对应的玩家ID
-        const currentPlayer = players.value.find(p => p.user_id === currentUser.value?.id);
-        if (currentPlayer) {
-          // 调用后端API移除玩家
-          const response = await playerApi.removePlayer(currentPlayer.id);
-          if (response.success) {
-            // 断开Socket.io连接
-            disconnectSocket();
-            // 跳转到首页
-            router.push('/home');
-          } else {
-            toast.error(response.message || '离开房间失败');
-          }
-        } else {
-          // 如果找不到玩家信息，直接断开连接并跳转
-          disconnectSocket();
-          router.push('/home');
-        }
+    // 找到当前用户对应的玩家ID
+    const currentPlayer = players.value.find(p => p.user_id === currentUser.value?.id);
+    if (currentPlayer) {
+      // 调用后端API移除玩家
+      const response = await playerApi.removePlayer(currentPlayer.id);
+      if (response.success) {
+        // 断开Socket.io连接
+        disconnectSocket();
+        // 跳转到首页
+        router.push('/home');
+      } else {
+        toast.error(response.message || '离开房间失败');
       }
-    });
+    } else {
+      // 如果找不到玩家信息，直接断开连接并跳转
+      disconnectSocket();
+      router.push('/home');
+    }
   } catch (error: any) {
     toast.error(error.message || '网络错误');
+  } finally {
+    confirmLeaveDialogVisible.value = false;
   }
 };
 
@@ -765,6 +784,14 @@ onUnmounted(() => {
 
 .score-input {
   margin-bottom: 20px;
+}
+
+.dialog-message {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .dialog-actions {

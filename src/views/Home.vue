@@ -31,22 +31,16 @@
           <van-button type="primary" size="small" @click="goToCreateRoom">创建第一个房间</van-button>
         </div>
 
-        <van-list
-          v-model:loading="loadingMore"
-          :finished="!hasMore"
-          finished-text="没有更多房间了"
-          @load="onLoad"
-          @refresh="onRefresh"
-          :pull-refresh="true"
-          :immediate-check="false"
-        >
+        <van-list v-model:loading="loadingMore" :finished="!hasMore" finished-text="没有更多房间了" @load="onLoad"
+          @refresh="onRefresh" :pull-refresh="true" :immediate-check="false">
           <div v-for="room in rooms" :key="room.id" class="room-item">
             <div class="room-info">
               <h3>{{ room.room_name }}</h3>
               <p>房间码: {{ room.room_code }}</p>
               <p>状态: {{ room.status === 'active' ? '进行中' : '已结束' }}</p>
             </div>
-            <van-button v-if="room.status === 'active'" type="primary" size="small" @click="enterRoom(room.id.toString())">进入房间</van-button>
+            <van-button v-if="room.status === 'active'" type="primary" size="small"
+              @click="enterRoom(room.id.toString())">进入房间</van-button>
             <van-button v-else type="primary" size="small" @click="viewRecord(room.id.toString())">查看记录</van-button>
           </div>
         </van-list>
@@ -159,7 +153,7 @@ const fetchRooms = async (isLoadMore = false) => {
       }
       total.value = response.data.total || 0;
       page.value++;
-      
+
       // 检查是否还有更多数据
       hasMore.value = rooms.value.length < total.value;
     } else {
@@ -191,12 +185,12 @@ onUnmounted(() => {
 const handleScroll = () => {
   // 检查是否已经在加载更多
   if (loadingMore.value || !hasMore.value) return;
-  
+
   // 检查是否滚动到底部
   const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
   const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
   const clientHeight = document.documentElement.clientHeight || window.innerHeight;
-  
+
   // 当滚动到距离底部100px时，加载更多
   if (scrollTop + clientHeight >= scrollHeight - 100) {
     fetchRooms(true);
@@ -250,7 +244,8 @@ const onRefresh = () => {
 .content {
   flex: 1;
   padding: 16px;
-  padding-bottom: 70px; /* 添加底部padding，确保内容不会被tabbar盖住 */
+  padding-bottom: 70px;
+  /* 添加底部padding，确保内容不会被tabbar盖住 */
   overflow-y: auto;
 }
 

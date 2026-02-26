@@ -28,11 +28,27 @@
           <h3>账号设置</h3>
           <van-cell-group>
             <van-cell title="修改密码" is-link @click="showChangePasswordDialog" />
-            <van-cell title="关于我们" is-link />
-            <van-cell title="退出登录" is-link @click="logout" />
+            <van-cell title="关于记分器" is-link @click="goToAbout" />
           </van-cell-group>
         </div>
       </div>
+
+      <!-- 退出登录按钮 -->
+      <div class="logout-container">
+        <van-button type="danger" block size="large" @click="logoutDialogVisible = true">退出登录</van-button>
+      </div>
+
+      <!-- 退出登录确认弹窗 -->
+      <van-popup v-model:show="logoutDialogVisible" round position="center" :style="{ width: '80%' }">
+        <div class="score-dialog">
+          <h3>确认退出</h3>
+          <p class="dialog-message">确定要退出登录吗？</p>
+          <div class="dialog-actions">
+            <van-button type="default" block @click="logoutDialogVisible = false">取消</van-button>
+            <van-button type="primary" block @click="confirmLogout">确认</van-button>
+          </div>
+        </div>
+      </van-popup>
     </div>
 
     <!-- 修改密码弹窗 -->
@@ -87,6 +103,7 @@ const user = ref<UserInfo>({
 
 // 修改密码相关变量
 const changePasswordDialogVisible = ref(false);
+const logoutDialogVisible = ref(false);
 const currentPassword = ref('');
 const newPassword = ref('');
 const confirmPassword = ref('');
@@ -164,8 +181,13 @@ const handleChangePassword = async () => {
   }
 };
 
-// 退出登录
-const logout = () => {
+// 跳转到关于我们页面
+const goToAbout = () => {
+  router.push('/about');
+};
+
+// 确认退出登录
+const confirmLogout = () => {
   // 清除本地存储
   localStorage.removeItem('token');
   localStorage.removeItem('user');
@@ -173,6 +195,9 @@ const logout = () => {
   // 跳转到登录页
   router.push('/login');
   toast.info('已退出登录');
+  
+  // 关闭弹窗
+  logoutDialogVisible.value = false;
 };
 
 onMounted(() => {
@@ -306,5 +331,41 @@ onMounted(() => {
 
 .form-actions .van-button {
   flex: 1;
+}
+
+.logout-container {
+  margin-top: 40px;
+  padding: 0 16px;
+}
+
+.logout-container .van-button {
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* 弹窗样式 */
+.score-dialog {
+  padding: 20px;
+}
+
+.score-dialog h3 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.dialog-message {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 10px;
 }
 </style>

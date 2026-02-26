@@ -48,6 +48,12 @@ const routes = [
     meta: { title: '个人中心', requiresAuth: true }
   },
   {
+    path: '/about',
+    name: 'About',
+    component: () => import('../views/About.vue'),
+    meta: { title: '关于我们', requiresAuth: true }
+  },
+  {
     path: '/room-detail/:roomId',
     name: 'RoomDetail',
     component: () => import('../views/RoomDetail.vue'),
@@ -75,7 +81,13 @@ router.beforeEach((to, _from, next) => {
       next('/login');
     }
   } else {
-    next();
+    // 对于不需要认证的页面，如果已经登录，跳转到首页
+    const token = localStorage.getItem('token');
+    if (token && to.path === '/login') {
+      next('/home');
+    } else {
+      next();
+    }
   }
 });
 

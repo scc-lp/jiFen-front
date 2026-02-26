@@ -13,6 +13,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     ForgotPassword: typeof import('./src/components/ForgotPassword.vue')['default']
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
+    Loading: typeof import('./src/components/Loading.vue')['default']
     Login: typeof import('./src/components/Login.vue')['default']
     Register: typeof import('./src/components/Register.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

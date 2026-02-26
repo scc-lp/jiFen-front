@@ -1,5 +1,10 @@
 <script setup lang="ts">
-// App.vue 现在只负责渲染路由视图
+import { loadingManager } from './utils/loading';
+import Loading from './components/Loading.vue';
+
+// 直接使用loadingManager的状态
+const loadingState = loadingManager.getState();
+const loadingText = loadingManager.getText();
 </script>
 
 <template>
@@ -9,6 +14,7 @@
         <component :is="Component" />
       </transition>
     </router-view>
+    <Loading :show="loadingState" :text="loadingText" />
   </div>
 </template>
 
