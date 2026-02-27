@@ -71,55 +71,71 @@ const goBack = () => {
 
 // 处理加入房间
 const handleJoinRoom = async () => {
+  console.log('handleJoinRoom called, roomCode:', roomCode.value);
   try {
     loading.value = true;
+    console.log('Loading set to true');
     
     // 尝试调用加入房间API
+    console.log('Calling joinRoom API');
     const joinResponse = await roomApi.joinRoom({
       room_code: roomCode.value
     });
+    console.log('joinResponse:', joinResponse);
     
     if (joinResponse.success && joinResponse.data) {
         toast.success('加入房间成功');
         // 跳转到刚加入的房间详情页面
         // 如果房间已结束，设置mode为view
         const mode = joinResponse.data.status === 'ended' ? 'view' : 'normal';
+        console.log('Joining room success, redirecting to:', `/room-detail/${joinResponse.data.id}`, { mode });
         router.push({ path: `/room-detail/${joinResponse.data.id}`, query: { mode } });
       } else {
         // 加入房间失败，可能是因为用户已经在房间中
         // 尝试根据房间码获取房间信息
+        console.log('Join room failed, trying to get room by code');
         const roomResponse = await roomApi.getRoomByCode(roomCode.value);
+        console.log('roomResponse:', roomResponse);
         
         if (roomResponse.success && roomResponse.data) {
           // 房间存在，直接跳转到房间详情页面
           toast.success('加入房间成功');
           // 如果房间已结束，设置mode为view
           const mode = roomResponse.data.status === 'ended' ? 'view' : 'normal';
+          console.log('Room exists, redirecting to:', `/room-detail/${roomResponse.data.id}`, { mode });
           router.push({ path: `/room-detail/${roomResponse.data.id}`, query: { mode } });
         } else {
+          console.log('Room not found or error:', joinResponse.message);
           toast.error(joinResponse.message || '加入房间失败');
         }
       }
     } catch (error: any) {
+      console.log('Error in joinRoom API:', error);
       // 加入房间API调用失败，可能是因为用户已经在房间中
       // 尝试根据房间码获取房间信息
       try {
+        console.log('Trying to get room by code after error');
         const roomResponse = await roomApi.getRoomByCode(roomCode.value);
+        console.log('roomResponse after error:', roomResponse);
         
         if (roomResponse.success && roomResponse.data) {
           // 房间存在，直接跳转到房间详情页面
           toast.success('加入房间成功');
           // 如果房间已结束，设置mode为view
           const mode = roomResponse.data.status === 'ended' ? 'view' : 'normal';
+          console.log('Room exists after error, redirecting to:', `/room-detail/${roomResponse.data.id}`, { mode });
           router.push({ path: `/room-detail/${roomResponse.data.id}`, query: { mode } });
         } else {
+          console.log('Room not found after error:', error.message);
           toast.error(error.message || '加入房间失败');
         }
       } catch (innerError: any) {
+        console.log('Inner error:', innerError);
         toast.error(innerError.message || '网络错误');
       }
     } finally {
     loading.value = false;
+    console.log('Loading set to false');
   }
 };
 
@@ -130,6 +146,8 @@ onMounted(() => {
   if (urlRoomCode) {
     // 自动填充房间码
     roomCode.value = urlRoomCode;
+    // 显示调试信息
+    toast.info(`房间码: ${urlRoomCode}`);
     // 尝试自动加入房间
     handleJoinRoom();
   }

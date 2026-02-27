@@ -60,7 +60,7 @@
               <div class="avatar-preview">
                 <div class="avatar-wrapper">
                   <img v-if="editForm.avatar" :src="editForm.avatar" alt="头像" style="width: 100%;height: 100%;">
-                  <div v-else class="avatar-placeholder">
+                  <div v-else class="avatar-placeholder-popup">
                     <van-icon name="camera" size="32px" />
                     <p class="placeholder-text">点击上传头像</p>
                   </div>
@@ -492,7 +492,7 @@ onMounted(() => {
   display: block;
 }
 
-.avatar-wrapper .avatar-placeholder {
+.avatar-wrapper .avatar-placeholder-popup {
   width: 100%;
   height: 100%;
   border-radius: 50%;
