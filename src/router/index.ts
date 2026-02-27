@@ -74,7 +74,8 @@ router.beforeEach((to, _from, next) => {
   // 检查是否需要认证
   if (to.meta.requiresAuth) {
     const token = localStorage.getItem('token');
-    if (token) {
+    // 对于JoinRoom路由，如果有room_code参数，允许未登录访问
+    if (token || (to.path === '/join-room' && to.query.room_code)) {
       next();
     } else {
       // 未登录，跳转到登录页

@@ -49,6 +49,45 @@
           </div>
         </div>
       </van-popup>
+
+      <!-- 编辑资料弹窗 -->
+      <van-popup v-model:show="editProfileDialogVisible" position="bottom" round>
+        <div class="popup-content">
+          <h3>编辑资料</h3>
+          <van-form @submit="handleEditProfile">
+            <!-- 头像上传 -->
+            <div class="avatar-upload">
+              <div class="avatar-preview">
+                <div class="avatar-wrapper">
+                  <img v-if="editForm.avatar" :src="editForm.avatar" alt="头像" style="width: 100%;height: 100%;">
+                  <div v-else class="avatar-placeholder">
+                    <van-icon name="camera" size="32px" />
+                    <p class="placeholder-text">点击上传头像</p>
+                  </div>
+                  <div class="avatar-upload-overlay">
+                    <van-uploader :after-read="handleAvatarUpload" :max-count="1" accept="image/*" :preview-size="80" :show-upload="false">
+                      <div class="upload-button">
+                        <van-icon name="camera" size="20px" />
+                      </div>
+                    </van-uploader>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 用户名 -->
+            <van-field v-model="editForm.username" name="username" label="用户名" placeholder="请输入用户名" :rules="[{ required: true, message: '请输入用户名' }]" />
+            
+            <!-- 手机号（只读） -->
+            <van-field v-model="editForm.phone" name="phone" label="手机号" :readonly="true" />
+            
+            <div class="form-actions">
+              <van-button type="default" @click="editProfileDialogVisible = false">取消</van-button>
+              <van-button type="primary" native-type="submit" :loading="editingProfile">确认修改</van-button>
+            </div>
+          </van-form>
+        </div>
+      </van-popup>
     </div>
 
     <!-- 修改密码弹窗 -->
@@ -104,10 +143,19 @@ const user = ref<UserInfo>({
 // 修改密码相关变量
 const changePasswordDialogVisible = ref(false);
 const logoutDialogVisible = ref(false);
+const editProfileDialogVisible = ref(false);
 const currentPassword = ref('');
 const newPassword = ref('');
 const confirmPassword = ref('');
 const changingPassword = ref(false);
+const editingProfile = ref(false);
+
+// 编辑资料表单数据
+const editForm = ref({
+  username: '',
+  phone: '',
+  avatar: ''
+});
 
 // 获取用户信息
 const getUserInfo = async () => {
@@ -129,7 +177,83 @@ const getUserInfo = async () => {
 
 // 编辑资料
 const editProfile = () => {
-  toast.info('编辑资料功能开发中');
+  // 填充表单数据
+  editForm.value = {
+    username: user.value.username,
+    phone: user.value.phone,
+    avatar: user.value.avatar || ''
+  };
+  // 显示弹窗
+  editProfileDialogVisible.value = true;
+};
+
+// 处理头像上传
+const handleAvatarUpload = (file: any) => {
+  // 限制头像大小，压缩图片
+  const canvas = document.createElement('canvas');
+  const img = new Image();
+  img.src = file.content;
+  
+  img.onload = () => {
+    // 设置压缩后的图片尺寸
+    const maxWidth = 200;
+    const maxHeight = 200;
+    let width = img.width;
+    let height = img.height;
+    
+    if (width > height) {
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
+    } else {
+      if (height > maxHeight) {
+        width = (width * maxHeight) / height;
+        height = maxHeight;
+      }
+    }
+    
+    canvas.width = width;
+    canvas.height = height;
+    
+    // 绘制压缩后的图片
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(img, 0, 0, width, height);
+      // 将压缩后的图片转换为base64字符串，质量为0.7
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      editForm.value.avatar = compressedDataUrl;
+    }
+  };
+};
+
+// 处理编辑资料
+const handleEditProfile = async () => {
+  try {
+    editingProfile.value = true;
+
+    // 调用编辑资料API
+    const response = await userApi.updateProfile({
+      username: editForm.value.username,
+      avatar: editForm.value.avatar
+    });
+
+    if (response.success) {
+      toast.success('资料修改成功');
+      
+      // 关闭弹窗
+      editProfileDialogVisible.value = false;
+      
+      // 更新用户信息
+      await getUserInfo();
+    } else {
+      toast.error(response.message || '资料修改失败');
+    }
+  } catch (error: any) {
+    toast.error(error.message || '资料修改失败');
+  } finally {
+    editingProfile.value = false;
+  }
 };
 
 // 显示修改密码弹窗
@@ -333,6 +457,101 @@ onMounted(() => {
   flex: 1;
 }
 
+/* 头像上传样式 */
+.avatar-upload {
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: center;
+}
+
+.avatar-preview {
+  display: flex;
+  justify-content: center;
+}
+
+.avatar-wrapper {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px dashed #d9d9d9;
+  transition: all 0.3s ease;
+}
+
+.avatar-wrapper:hover {
+  border-color: #1989fa;
+  box-shadow: 0 0 0 3px rgba(25, 137, 250, 0.1);
+}
+
+.avatar-wrapper .avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar-wrapper .avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  transition: all 0.3s ease;
+}
+
+.avatar-wrapper:hover .avatar-placeholder {
+  background-color: #f0f0f0;
+  color: #1989fa;
+}
+
+.placeholder-text {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.avatar-upload-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.avatar-wrapper:hover .avatar-upload-overlay {
+  opacity: 1;
+}
+
+.upload-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1989fa;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.upload-button:hover {
+  background-color: #fff;
+  transform: scale(1.1);
+}
+
 .logout-container {
   margin-top: 40px;
   padding: 0 16px;
@@ -367,5 +586,33 @@ onMounted(() => {
 .dialog-actions {
   display: flex;
   gap: 10px;
+}
+
+/* 头像上传样式 */
+.avatar-upload {
+  margin-bottom: 20px;
+}
+
+.avatar-preview {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.avatar-upload .avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar-upload .avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

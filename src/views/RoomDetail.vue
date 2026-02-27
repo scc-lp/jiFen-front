@@ -23,6 +23,10 @@
           <span class="label">房间码</span>
           <span class="value">{{ roomInfo.room_code }} <van-button v-if="mode !== 'view'" size="small" @click="copyRoomCode">复制</van-button></span>
         </div>
+        <div class="info-item" v-if="mode !== 'view' && roomInfo.status === 'active'">
+          <span class="label">加入方式</span>
+          <span class="value"><van-button size="small" @click="showQRCode">查看二维码</van-button></span>
+        </div>
         <div class="info-item">
           <span class="label">状态</span>
           <span class="value">{{ roomInfo.status === 'active' ? '进行中' : '已结束' }}</span>
@@ -46,12 +50,22 @@
 
           <div v-else class="player-item" v-for="player in players" :key="player.id">
             <div class="player-info">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <div>{{ player.player_name }}</div>
-                <van-tag v-if="player.is_creator" color="#1989fa">房主</van-tag>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="player-avatar">
+                  <img v-if="player.avatar" :src="player.avatar" alt="头像" class="avatar">
+                  <div v-else class="avatar-placeholder">
+                    <van-icon name="user-o" size="24px" />
+                  </div>
+                </div>
+                <div class="player-details">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <div>{{ player.player_name }}</div>
+                    <van-tag v-if="player.is_creator" color="#1989fa">房主</van-tag>
+                  </div>
+                  <p>分数: <span style="color: #1989fa;font-weight: bold;">{{ player.score || 0 }}</span></p>
+                  <p v-if="currentUser && player.user_id === currentUser.id" style="font-size: 12px; color: #999;">（我）</p>
+                </div>
               </div>
-              <p>分数: <span style="color: #1989fa;font-weight: bold;">{{ player.score || 0 }}</span></p>
-              <p v-if="currentUser && player.user_id === currentUser.id" style="font-size: 12px; color: #999;">（我）</p>
             </div>
 
             <!-- 只对非当前用户显示给分按钮 -->
@@ -98,7 +112,7 @@
       <div class="score-dialog">
         <h3>给{{ selectedPlayerName }}分数</h3>
         <div class="score-input">
-          <van-field v-model="scoreInput" type="number" label="分数" placeholder="请输入分数" :min="0" step="1" />
+          <van-field ref="scoreInputRef" v-model="scoreInput" type="number" label="分数" placeholder="请输入分数" :min="0" step="1" />
         </div>
         <div class="dialog-actions">
           <van-button type="default" block @click="scoreDialogVisible = false">取消</van-button>
@@ -112,7 +126,7 @@
       <div class="score-dialog">
         <h3>批量给分</h3>
         <div class="score-input">
-          <van-field v-model="batchScoreInput" type="number" label="分数" placeholder="请输入分数" :min="0" step="1" />
+          <van-field ref="batchScoreInputRef" v-model="batchScoreInput" type="number" label="分数" placeholder="请输入分数" :min="0" step="1" />
         </div>
         <div class="dialog-actions">
           <van-button type="default" block @click="batchScoreDialogVisible = false">取消</van-button>
@@ -144,11 +158,25 @@
         </div>
       </div>
     </van-popup>
+
+    <!-- 二维码弹窗 -->
+    <van-popup v-if="mode !== 'view'" v-model:show="qrCodeDialogVisible" round position="center" :style="{ width: '80%' }">
+      <div class="score-dialog">
+        <h3>房间二维码</h3>
+        <div class="qr-code-container">
+          <img :src="qrCodeUrl" alt="房间二维码" class="qr-code">
+          <p class="qr-code-tip">扫描二维码加入房间</p>
+        </div>
+        <div class="dialog-actions">
+          <van-button type="primary" block @click="qrCodeDialogVisible = false">关闭</van-button>
+        </div>
+      </div>
+    </van-popup>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { toast } from '../utils/toast';
 import { io } from 'socket.io-client';
@@ -181,6 +209,7 @@ interface PlayerInfo {
   is_creator: number;
   score: number;
   created_at: string;
+  avatar?: string;
 }
 
 interface ScoreRecord {
@@ -215,10 +244,14 @@ const scoreDialogVisible = ref(false);
 const batchScoreDialogVisible = ref(false);
 const confirmEndDialogVisible = ref(false);
 const confirmLeaveDialogVisible = ref(false);
+const qrCodeDialogVisible = ref(false);
+const qrCodeUrl = ref('');
 const selectedPlayerId = ref(0);
 const selectedPlayerName = ref('');
 const scoreInput = ref('');
 const batchScoreInput = ref('');
+const scoreInputRef = ref<any>(null);
+const batchScoreInputRef = ref<any>(null);
 // 判断当前用户是否是房主
 const isCreator = computed(() => {
   if (!currentUser.value) return false;
@@ -254,6 +287,17 @@ const copyRoomCode = async () => {
   } catch (error) {
     toast.error('复制失败，请手动复制');
   }
+};
+
+// 显示二维码
+const showQRCode = () => {
+  // 生成二维码URL，使用在线二维码生成服务
+  const currentUrl = window.location.origin;
+  const roomCode = roomInfo.value.room_code;
+  const qrContent = `${currentUrl}/join?room_code=${roomCode}`;
+  // 使用QRCode.js或在线服务生成二维码
+  qrCodeUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrContent)}`;
+  qrCodeDialogVisible.value = true;
 };
 
 // 获取当前用户信息
@@ -342,8 +386,14 @@ const changeScore = async (playerId: number, scoreChange: number) => {
 const openScoreDialog = (playerId: number, playerName: string) => {
   selectedPlayerId.value = playerId;
   selectedPlayerName.value = playerName;
-  scoreInput.value = '1'; // 默认值为1
+  scoreInput.value = ''; // 默认值为1
   scoreDialogVisible.value = true;
+  // 等待DOM更新后聚焦到输入框
+  nextTick(() => {
+    if (scoreInputRef.value) {
+      scoreInputRef.value.focus();
+    }
+  });
 };
 
 // 确认给分
@@ -360,8 +410,14 @@ const confirmScore = async () => {
 
 // 打开批量给分弹窗
 const openBatchScoreDialog = () => {
-  batchScoreInput.value = '1'; // 默认值为1
+  batchScoreInput.value = ''; // 默认值为1
   batchScoreDialogVisible.value = true;
+  // 等待DOM更新后聚焦到输入框
+  nextTick(() => {
+    if (batchScoreInputRef.value) {
+      batchScoreInputRef.value.focus();
+    }
+  });
 };
 
 // 确认批量给分
@@ -391,13 +447,11 @@ const confirmBatchScore = async () => {
 // 初始化Socket.io连接
 const initSocket = () => {
   console.log('开始初始化Socket.io连接');
-  // 获取当前页面的协议和主机，构建后端服务器地址
-  const protocol = window.location.protocol;
-  const hostname = window.location.hostname;
-  const backendUrl = `${protocol}//${hostname}:3000`;
+  // 从环境变量获取后端服务器地址
+  const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
   console.log('后端服务器地址:', backendUrl);
 
-  // 创建Socket.io连接，使用动态构建的后端地址
+  // 创建Socket.io连接，使用环境变量中的后端地址
   socket.value = io(backendUrl, {
     transports: ['websocket'],
     reconnection: true,
@@ -469,6 +523,17 @@ const initSocket = () => {
       }
     } else {
       console.log('房间ID不匹配，忽略事件');
+    }
+  });
+
+  // 监听用户信息更新事件
+  socket.value.on('userUpdated', async (data: any) => {
+    console.log('收到用户信息更新事件:', data);
+    // 重新获取玩家列表
+    const playersResponse = await playerApi.getPlayers(Number(roomId.value));
+    if (playersResponse.success && playersResponse.data) {
+      console.log('更新玩家列表:', playersResponse.data);
+      players.value = playersResponse.data as PlayerInfo[];
     }
   });
 
@@ -711,18 +776,39 @@ onUnmounted(() => {
 }
 
 .player-info {
-  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.player-info h3 {
-  margin: 0 0 8px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
+.player-avatar {
+  position: relative;
+}
+
+.player-avatar .avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.player-avatar .avatar-placeholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+}
+
+.player-info .player-details {
+  flex: 1;
 }
 
 .player-info p {
-  margin: 0;
+  margin: 4px 0 0 0;
   font-size: 14px;
   color: #666;
 }
@@ -792,6 +878,26 @@ onUnmounted(() => {
   color: #666;
   font-size: 14px;
   line-height: 1.5;
+}
+
+.qr-code-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.qr-code {
+  width: 200px;
+  height: 200px;
+  margin-bottom: 16px;
+}
+
+.qr-code-tip {
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+  margin: 0;
 }
 
 .dialog-actions {

@@ -81,4 +81,13 @@ export const userApi = {
   }> => {
     return await api.post('/users/reset-password', params);
   },
+  
+  // 根据手机号获取用户信息
+  getUserByPhone: async (phone: string): Promise<{
+    success: boolean;
+    data?: UserInfo;
+    message?: string;
+  }> => {
+    return await api.get(`/users/by-phone/${phone}`);
+  },
 };

@@ -14,7 +14,7 @@
         <div class="scan-area">
           <van-icon name="scan" size="80px" color="#1989fa" />
           <p>扫描二维码加入房间</p>
-          <van-button type="primary" size="small">打开相机</van-button>
+          <van-button type="primary" size="small" @click="openCamera">打开相机</van-button>
         </div>
       </div>
 
@@ -54,12 +54,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { toast } from '../utils/toast';
 import { roomApi } from '../api/room.ts';
 
 const router = useRouter();
+const route = useRoute();
 const roomCode = ref('');
 const loading = ref(false);
 
@@ -119,6 +120,39 @@ const handleJoinRoom = async () => {
       }
     } finally {
     loading.value = false;
+  }
+};
+
+// 页面挂载时检查URL参数
+onMounted(() => {
+  // 检查URL参数中是否有room_code
+  const urlRoomCode = route.query.room_code as string;
+  if (urlRoomCode) {
+    // 自动填充房间码
+    roomCode.value = urlRoomCode;
+    // 尝试自动加入房间
+    handleJoinRoom();
+  }
+});
+
+// 打开相机
+const openCamera = () => {
+  // 检测是否在微信环境中
+  const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
+  
+  if (isWeChat) {
+    // 在微信环境中，提示用户使用微信扫一扫
+    toast.info('请使用微信扫一扫功能扫描二维码');
+  } else {
+    // 不在微信环境中，尝试打开相机
+    try {
+      // 这里可以集成第三方扫码库，如qrcode.js或zxing
+      // 由于浏览器安全限制，需要用户交互才能访问摄像头
+      // 这里只是一个示例，实际需要集成扫码库
+      toast.info('请使用相机应用扫描二维码');
+    } catch (error) {
+      toast.error('无法打开相机，请手动扫描二维码');
+    }
   }
 };
 </script>
