@@ -28,6 +28,7 @@
           <h3>账号设置</h3>
           <van-cell-group>
             <van-cell title="修改密码" is-link @click="showChangePasswordDialog" />
+            <van-cell title="分享记分器" is-link @click="showShareDialog = true" />
             <van-cell title="关于记分器" is-link @click="goToAbout" />
           </van-cell-group>
         </div>
@@ -110,6 +111,26 @@
       </div>
     </van-popup>
 
+    <!-- 分享弹窗 -->
+    <van-popup v-model:show="showShareDialog" round position="center" :style="{ width: '80%' }">
+      <div class="score-dialog" style="text-align: center;">
+        <h3>分享记分器</h3>
+        <div class="share-content">
+          <p class="share-link" style="word-break: break-all; margin: 0 0 20px 0;">{{ frontendUrl }}</p>
+          <van-button type="default" size="small" @click="copyLink" style="margin-bottom: 20px;">
+            复制链接
+          </van-button>
+          <div class="qr-code-container" style="display: flex; flex-direction: column; align-items: center;">
+            <img :src="shareQrCodeUrl" alt="记分器二维码" class="qr-code">
+            <p class="qr-code-tip">长按二维码保存到本地相册</p>
+          </div>
+        </div>
+        <div class="dialog-actions">
+          <van-button type="primary" block @click="showShareDialog = false">关闭</van-button>
+        </div>
+      </div>
+    </van-popup>
+
     <!-- 底部导航栏 -->
     <div class="tabbar">
       <van-tabbar route>
@@ -121,10 +142,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { toast } from '../utils/toast';
 import { userApi } from '../api/user';
+
+// 分享相关状态
+const showShareDialog = ref(false);
+// 前端域名，从环境变量获取
+const frontendUrl = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
+// 分享二维码URL
+const shareQrCodeUrl = computed(() => {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(frontendUrl)}`;
+});
+
+// 复制链接
+const copyLink = async () => {
+  try {
+    await navigator.clipboard.writeText(frontendUrl);
+    toast.success('链接已复制');
+  } catch (error) {
+    toast.error('复制失败，请手动复制');
+  }
+};
 
 // 类型定义
 interface UserInfo {

@@ -597,6 +597,23 @@ onMounted(async () => {
     }
   }
 
+  // 检查是否是房主，并且是第一次进入房间，如果是，自动显示二维码
+  if (isCreator.value && roomInfo.value.status === 'active') {
+    // 检查是否已经显示过二维码
+    const shownRooms = localStorage.getItem('shown_qr_rooms');
+    const shownRoomsArray = shownRooms ? JSON.parse(shownRooms) : [];
+    
+    // 如果房间ID不在已显示列表中，自动显示二维码
+    if (!shownRoomsArray.includes(roomInfo.value.id)) {
+      // 显示二维码
+      showQRCode();
+      
+      // 将房间ID添加到已显示列表中
+      shownRoomsArray.push(roomInfo.value.id);
+      localStorage.setItem('shown_qr_rooms', JSON.stringify(shownRoomsArray));
+    }
+  }
+
   // 确保roomId.value已经设置后再初始化Socket.io
   if (roomId.value) {
     initSocket();
