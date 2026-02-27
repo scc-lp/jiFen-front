@@ -6,10 +6,12 @@ class LoadingManager {
   private static instance: LoadingManager;
   private loadingState: Ref<boolean>;
   private loadingText: Ref<string>;
+  private requestCount: number;
 
   private constructor() {
     this.loadingState = ref(false);
     this.loadingText = ref('加载中...');
+    this.requestCount = 0;
   }
 
   public static getInstance(): LoadingManager {
@@ -21,11 +23,18 @@ class LoadingManager {
 
   public show(text: string = '加载中...') {
     this.loadingText.value = text;
-    this.loadingState.value = true;
+    this.requestCount++;
+    if (this.requestCount > 0) {
+      this.loadingState.value = true;
+    }
   }
 
   public hide() {
-    this.loadingState.value = false;
+    this.requestCount--;
+    if (this.requestCount <= 0) {
+      this.requestCount = 0;
+      this.loadingState.value = false;
+    }
   }
 
   public getState(): Ref<boolean> {
