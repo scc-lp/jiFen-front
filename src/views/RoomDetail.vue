@@ -314,33 +314,55 @@ const fetchCurrentUser = async () => {
 };
 
 // 获取房间详情
-const fetchRoomDetail = async () => {
+const fetchRoomDetail = async (options: { roomInfo?: boolean; players?: boolean; scoreHistory?: boolean } = { roomInfo: true, players: true, scoreHistory: true }) => {
   try {
     loading.value = true;
     // showLoading({ message: '加载中...' });
 
-    // 获取房间信息
-    const roomResponse = await roomApi.getRoomDetail(Number(roomId.value));
-    if (roomResponse.success && roomResponse.data) {
-      roomInfo.value = roomResponse.data as RoomInfo;
-    } else {
-      toast.error(roomResponse.message || '获取房间信息失败');
+    // 并行执行API调用，提高性能
+    const promises = [];
+    
+    if (options.roomInfo) {
+      promises.push(roomApi.getRoomDetail(Number(roomId.value)));
+    }
+    
+    if (options.players) {
+      promises.push(playerApi.getPlayers(Number(roomId.value)));
+    }
+    
+    if (options.scoreHistory) {
+      promises.push(scoreApi.getScoreHistory(Number(roomId.value)));
     }
 
-    // 获取玩家列表
-    const playersResponse = await playerApi.getPlayers(Number(roomId.value));
-    if (playersResponse.success && playersResponse.data) {
-      players.value = playersResponse.data as PlayerInfo[];
-    } else {
-      toast.error(playersResponse.message || '获取玩家列表失败');
+    const results = await Promise.all(promises);
+    
+    // 处理结果
+    let index = 0;
+    if (options.roomInfo) {
+      const roomResponse = results[index++];
+      if (roomResponse && roomResponse.success && roomResponse.data) {
+        roomInfo.value = roomResponse.data as RoomInfo;
+      } else {
+        toast.error(roomResponse?.message || '获取房间信息失败');
+      }
     }
-
-    // 获取分数记录
-    const historyResponse = await scoreApi.getScoreHistory(Number(roomId.value));
-    if (historyResponse.success && historyResponse.data) {
-      scoreHistory.value = historyResponse.data as ScoreRecord[];
-    } else {
-      toast.error(historyResponse.message || '获取分数记录失败');
+    
+    if (options.players) {
+      const playersResponse = results[index++];
+      if (playersResponse && playersResponse.success && playersResponse.data) {
+        players.value = playersResponse.data as PlayerInfo[];
+      } else {
+        toast.error(playersResponse?.message || '获取玩家列表失败');
+      }
+    }
+    
+    if (options.scoreHistory) {
+      const historyResponse = results[index++];
+      if (historyResponse && historyResponse.success && historyResponse.data) {
+        scoreHistory.value = historyResponse.data as ScoreRecord[];
+      } else {
+        toast.error(historyResponse?.message || '获取分数记录失败');
+      }
     }
   } catch (error: any) {
     toast.error(error.message || '网络错误');
@@ -433,10 +455,9 @@ const confirmBatchScore = async () => {
   const otherPlayers = players.value.filter(p => p.id !== selectedPlayerId.value);
 
   try {
-    // 串行执行给分操作
-    for (const player of otherPlayers) {
-      await changeScore(player.id, scoreChange);
-    }
+    // 并行执行给分操作，提高性能
+    const promises = otherPlayers.map(player => changeScore(player.id, scoreChange));
+    await Promise.all(promises);
 
     toast.success('批量给分成功');
     batchScoreDialogVisible.value = false;
@@ -457,7 +478,9 @@ const initSocket = () => {
     transports: ['websocket'],
     reconnection: true,
     reconnectionAttempts: 5,
-    reconnectionDelay: 1000
+    reconnectionDelay: 1000,
+    timeout: 5000, // 增加超时时间
+    autoConnect: true
   });
 
   // 连接成功事件
@@ -474,8 +497,8 @@ const initSocket = () => {
   // 分数更新事件
   socket.value.on('scoreUpdated', async (data: any) => {
     console.log('收到分数更新事件:', data);
-    // 重新获取玩家列表和分数记录
-    await fetchRoomDetail();
+    // 只获取玩家列表和分数记录，不需要获取房间信息
+    await fetchRoomDetail({ roomInfo: false, players: true, scoreHistory: true });
   });
 
   // 新玩家加入事件
@@ -484,12 +507,8 @@ const initSocket = () => {
     // 检查事件中的room_id是否与当前房间的ID匹配
     if (data.room_id === Number(roomId.value)) {
       console.log('房间ID匹配，更新玩家列表');
-      // 重新获取玩家列表
-      const playersResponse = await playerApi.getPlayers(Number(roomId.value));
-      if (playersResponse.success && playersResponse.data) {
-        console.log('更新玩家列表:', playersResponse.data);
-        players.value = playersResponse.data as PlayerInfo[];
-      }
+      // 只获取玩家列表，不需要获取房间信息和分数记录
+      await fetchRoomDetail({ roomInfo: false, players: true, scoreHistory: false });
     } else {
       console.log('房间ID不匹配，忽略事件');
     }
