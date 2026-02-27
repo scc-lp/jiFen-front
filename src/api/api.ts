@@ -45,9 +45,11 @@ api.interceptors.response.use(
         // token过期或无效，清除localStorage并跳转到登录页
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        // 保存当前URL，登录成功后可以跳转回来
+        // 只有当当前页面不是登录页时，才保存redirectUrl
         const currentUrl = window.location.href;
-        localStorage.setItem('redirectUrl', currentUrl);
+        if (!currentUrl.includes('/login')) {
+          localStorage.setItem('redirectUrl', currentUrl);
+        }
         window.location.href = '/login';
       }
       return Promise.reject(error.response.data);

@@ -31,7 +31,7 @@
           <van-button type="primary" size="small" @click="goToCreateRoom">创建第一个房间</van-button>
         </div>
 
-        <van-list v-model:loading="loadingMore" :finished="!hasMore" finished-text="没有更多房间了" @load="onLoad"
+        <van-list v-if="rooms.length > 0" v-model:loading="loadingMore" :finished="!hasMore" finished-text="没有更多房间了" @load="onLoad"
           @refresh="onRefresh" :pull-refresh="true" :immediate-check="false">
           <div v-for="room in rooms" :key="room.id" class="room-item">
             <div class="room-info">
