@@ -21,7 +21,8 @@
         </div>
         <div class="info-item">
           <span class="label">房间码</span>
-          <span class="value">{{ roomInfo.room_code }} <van-button v-if="mode !== 'view'" size="small" @click="copyRoomCode">复制</van-button></span>
+          <span class="value">{{ roomInfo.room_code }} <van-button v-if="mode !== 'view' && roomInfo.room_code"
+              size="small" @click="copyRoomCode">复制</van-button></span>
         </div>
         <div class="info-item" v-if="mode !== 'view' && roomInfo.status === 'active'">
           <span class="label">加入方式</span>
@@ -29,7 +30,8 @@
         </div>
         <div class="info-item">
           <span class="label">状态</span>
-          <span class="value">{{ roomInfo.status === 'active' ? '进行中' : '已结束' }}</span>
+          <span class="value">{{ roomInfo.status === 'active' && '进行中' || roomInfo.status === 'ended' && '已结束' ||
+            '' }}</span>
         </div>
         <div class="info-item">
           <span class="label">创建时间</span>
@@ -63,16 +65,18 @@
                     <van-tag v-if="player.is_creator" color="#1989fa">房主</van-tag>
                   </div>
                   <p>分数: <span style="color: #1989fa;font-weight: bold;">{{ player.score || 0 }}</span></p>
-                  <p v-if="currentUser && player.user_id === currentUser.id" style="font-size: 12px; color: #999;">（我）</p>
+                  <p v-if="currentUser && player.user_id === currentUser.id" style="font-size: 12px; color: #999;">（我）
+                  </p>
                 </div>
               </div>
             </div>
 
             <!-- 只对非当前用户显示给分按钮 -->
             <div class="score-controls" v-if="currentUser && player.user_id !== currentUser.id && mode !== 'view'">
-              <van-button type="primary" size="small" @click="openScoreDialog(player.id, player.player_name)">给分</van-button>
+              <van-button type="primary" size="small"
+                @click="openScoreDialog(player.id, player.player_name)">给分</van-button>
             </div>
-            
+
             <!-- 只对当前用户显示批量给分按钮 -->
             <div class="score-controls" v-if="currentUser && player.user_id === currentUser.id && mode !== 'view'">
               <van-button type="primary" size="small" @click="openBatchScoreDialog">批量给分</van-button>
@@ -97,9 +101,11 @@
             <van-empty description="暂无分数记录" />
           </div>
 
-          <div v-else class="history-item" v-for="record in scoreHistory.filter(r => r.score_change > 0)" :key="record.id">
+          <div v-else class="history-item" v-for="record in scoreHistory.filter(r => r.score_change > 0)"
+            :key="record.id">
             <div class="history-info">
-              <p v-if="record.giver_name">{{ record.giver_name }} 给 {{ record.player_name }} {{ record.score_change }}分</p>
+              <p v-if="record.giver_name">{{ record.giver_name }} 给 {{ record.player_name }} {{ record.score_change }}分
+              </p>
               <p class="time">{{ formatDateTime(record.created_at) }}</p>
             </div>
           </div>
@@ -108,11 +114,13 @@
     </div>
 
     <!-- 给分弹窗 -->
-    <van-popup v-if="mode !== 'view'" v-model:show="scoreDialogVisible" round position="center" :style="{ width: '80%' }">
+    <van-popup v-if="mode !== 'view'" v-model:show="scoreDialogVisible" round position="center"
+      :style="{ width: '80%' }">
       <div class="score-dialog">
         <h3>给{{ selectedPlayerName }}分数</h3>
         <div class="score-input">
-          <van-field ref="scoreInputRef" v-model="scoreInput" type="number" label="分数" placeholder="请输入分数" :min="0" step="1" />
+          <van-field ref="scoreInputRef" v-model="scoreInput" type="number" label="分数" placeholder="请输入分数" :min="0"
+            step="1" />
         </div>
         <div class="dialog-actions">
           <van-button type="default" block @click="scoreDialogVisible = false">取消</van-button>
@@ -122,11 +130,13 @@
     </van-popup>
 
     <!-- 批量给分弹窗 -->
-    <van-popup v-if="mode !== 'view'" v-model:show="batchScoreDialogVisible" round position="center" :style="{ width: '80%' }">
+    <van-popup v-if="mode !== 'view'" v-model:show="batchScoreDialogVisible" round position="center"
+      :style="{ width: '80%' }">
       <div class="score-dialog">
         <h3>批量给分</h3>
         <div class="score-input">
-          <van-field ref="batchScoreInputRef" v-model="batchScoreInput" type="number" label="分数" placeholder="请输入分数" :min="0" step="1" />
+          <van-field ref="batchScoreInputRef" v-model="batchScoreInput" type="number" label="分数" placeholder="请输入分数"
+            :min="0" step="1" />
         </div>
         <div class="dialog-actions">
           <van-button type="default" block @click="batchScoreDialogVisible = false">取消</van-button>
@@ -136,7 +146,8 @@
     </van-popup>
 
     <!-- 确认结束弹窗 -->
-    <van-popup v-if="mode !== 'view'" v-model:show="confirmEndDialogVisible" round position="center" :style="{ width: '80%' }">
+    <van-popup v-if="mode !== 'view'" v-model:show="confirmEndDialogVisible" round position="center"
+      :style="{ width: '80%' }">
       <div class="score-dialog">
         <h3>确认结束</h3>
         <p class="dialog-message">确定要结束记分吗？结束后房间将无法继续记分。</p>
@@ -148,7 +159,8 @@
     </van-popup>
 
     <!-- 确认离开弹窗 -->
-    <van-popup v-if="mode !== 'view'" v-model:show="confirmLeaveDialogVisible" round position="center" :style="{ width: '80%' }">
+    <van-popup v-if="mode !== 'view'" v-model:show="confirmLeaveDialogVisible" round position="center"
+      :style="{ width: '80%' }">
       <div class="score-dialog">
         <h3>确认离开</h3>
         <p class="dialog-message">确定要离开该房间吗？离开后可以再次加入。</p>
@@ -160,7 +172,8 @@
     </van-popup>
 
     <!-- 二维码弹窗 -->
-    <van-popup v-if="mode !== 'view'" v-model:show="qrCodeDialogVisible" round position="center" :style="{ width: '80%' }">
+    <van-popup v-if="mode !== 'view'" v-model:show="qrCodeDialogVisible" round position="center"
+      :style="{ width: '80%' }">
       <div class="score-dialog">
         <h3>房间二维码</h3>
         <div class="qr-code-container">
@@ -195,7 +208,7 @@ interface RoomInfo {
   id: number;
   room_code: string;
   room_name: string;
-  status: 'active' | 'ended';
+  status: 'active' | 'ended' | '';
   created_at: string;
   ended_at: string | null;
   creator_id: number;
@@ -228,7 +241,7 @@ const roomInfo = ref<RoomInfo>({
   id: 0,
   room_code: '',
   room_name: '',
-  status: 'active',
+  status: '',
   created_at: '',
   ended_at: null,
   creator_id: 0
@@ -321,21 +334,21 @@ const fetchRoomDetail = async (options: { roomInfo?: boolean; players?: boolean;
 
     // 并行执行API调用，提高性能
     const promises = [];
-    
+
     if (options.roomInfo) {
       promises.push(roomApi.getRoomDetail(Number(roomId.value)));
     }
-    
+
     if (options.players) {
       promises.push(playerApi.getPlayers(Number(roomId.value)));
     }
-    
+
     if (options.scoreHistory) {
       promises.push(scoreApi.getScoreHistory(Number(roomId.value)));
     }
 
     const results = await Promise.all(promises);
-    
+
     // 处理结果
     let index = 0;
     if (options.roomInfo) {
@@ -346,7 +359,7 @@ const fetchRoomDetail = async (options: { roomInfo?: boolean; players?: boolean;
         toast.error(roomResponse?.message || '获取房间信息失败');
       }
     }
-    
+
     if (options.players) {
       const playersResponse = results[index++];
       if (playersResponse && playersResponse.success && playersResponse.data) {
@@ -355,7 +368,7 @@ const fetchRoomDetail = async (options: { roomInfo?: boolean; players?: boolean;
         toast.error(playersResponse?.message || '获取玩家列表失败');
       }
     }
-    
+
     if (options.scoreHistory) {
       const historyResponse = results[index++];
       if (historyResponse && historyResponse.success && historyResponse.data) {
@@ -621,12 +634,12 @@ onMounted(async () => {
     // 检查是否已经显示过二维码
     const shownRooms = localStorage.getItem('shown_qr_rooms');
     const shownRoomsArray = shownRooms ? JSON.parse(shownRooms) : [];
-    
+
     // 如果房间ID不在已显示列表中，自动显示二维码
     if (!shownRoomsArray.includes(roomInfo.value.id)) {
       // 显示二维码
       showQRCode();
-      
+
       // 将房间ID添加到已显示列表中
       shownRoomsArray.push(roomInfo.value.id);
       localStorage.setItem('shown_qr_rooms', JSON.stringify(shownRoomsArray));
