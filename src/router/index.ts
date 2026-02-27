@@ -78,7 +78,9 @@ router.beforeEach((to, _from, next) => {
     if (token || (to.path === '/join-room' && to.query.room_code)) {
       next();
     } else {
-      // 未登录，跳转到登录页
+      // 未登录，保存当前URL，然后跳转到登录页
+      const currentUrl = window.location.href;
+      localStorage.setItem('redirectUrl', currentUrl);
       next('/login');
     }
   } else {

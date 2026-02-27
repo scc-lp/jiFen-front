@@ -293,9 +293,9 @@ const copyRoomCode = async () => {
 const showQRCode = () => {
   // 生成二维码URL，使用在线二维码生成服务
   const currentUrl = window.location.origin;
-  const roomCode = roomInfo.value.room_code;
+  const roomId = roomInfo.value.id;
   // 由于使用了哈希路由，需要在URL中添加#
-  const qrContent = `${currentUrl}/#/join?room_code=${roomCode}`;
+  const qrContent = `${currentUrl}/#/room-detail/${roomId}`;
   // 使用QRCode.js或在线服务生成二维码
   qrCodeUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrContent)}`;
   qrCodeDialogVisible.value = true;
