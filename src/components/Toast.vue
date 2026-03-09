@@ -43,6 +43,8 @@ defineProps({
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-width: 80vw;
+  min-width: 120px;
 }
 
 .toast-content {
@@ -50,6 +52,9 @@ defineProps({
   align-items: center;
   gap: 8px;
   font-size: 14px;
+  word-break: break-word;
+  text-align: center;
+  line-height: 1.5;
 }
 
 .toast.success {

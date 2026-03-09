@@ -147,7 +147,7 @@
 
     <!-- 确认结束弹窗 -->
     <van-popup v-if="mode !== 'view'" v-model:show="confirmEndDialogVisible" round position="center"
-      :style="{ width: '80%' }">
+      :style="{ width: '90%' }">
       <div class="score-dialog">
         <h3>确认结束</h3>
         <p class="dialog-message">确定要结束记分吗？结束后房间将无法继续记分。</p>
@@ -294,11 +294,44 @@ const formatDateTime = (dateString: string) => {
 
 // 复制房间码
 const copyRoomCode = async () => {
+  const roomCode = roomInfo.value.room_code;
+  if (!roomCode) {
+    toast.error('房间码不存在');
+    return;
+  }
+  
+  // 优先使用 Clipboard API
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(roomCode);
+      toast.success('房间码已复制');
+      return;
+    } catch (error) {
+      console.error('Clipboard API 失败:', error);
+    }
+  }
+  
+  // 后备方案：使用 textarea 复制
   try {
-    await navigator.clipboard.writeText(roomInfo.value.room_code);
-    toast.success('房间码已复制');
+    const textarea = document.createElement('textarea');
+    textarea.value = roomCode;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    textarea.style.top = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    const result = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    
+    if (result) {
+      toast.success('房间码已复制');
+    } else {
+      toast.error('复制失败，请手动复制: ' + roomCode);
+    }
   } catch (error) {
-    toast.error('复制失败，请手动复制');
+    console.error('复制失败:', error);
+    toast.error('复制失败，请手动复制: ' + roomCode);
   }
 };
 
@@ -483,7 +516,7 @@ const confirmBatchScore = async () => {
 const initSocket = () => {
   console.log('开始初始化Socket.io连接');
   // 从环境变量获取后端服务器地址
-  const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  const backendUrl = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:3000';
   console.log('后端服务器地址:', backendUrl);
 
   // 获取当前token用于身份验证
