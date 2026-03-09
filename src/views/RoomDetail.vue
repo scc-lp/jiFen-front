@@ -486,14 +486,20 @@ const initSocket = () => {
   const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
   console.log('后端服务器地址:', backendUrl);
 
+  // 获取当前token用于身份验证
+  const token = localStorage.getItem('token') || '';
+
   // 创建Socket.io连接，使用环境变量中的后端地址
   socket.value = io(backendUrl, {
     transports: ['websocket'],
     reconnection: true,
     reconnectionAttempts: 5,
     reconnectionDelay: 1000,
-    timeout: 5000, // 增加超时时间
-    autoConnect: true
+    timeout: 5000,
+    autoConnect: true,
+    auth: {
+      token: token
+    }
   });
 
   // 连接成功事件
