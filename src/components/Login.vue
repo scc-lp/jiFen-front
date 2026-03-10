@@ -80,39 +80,37 @@ const handlePhoneInput = debounce(async () => {
 
 // 处理登录
 const handleLogin = async () => {
-
-  toast.success('密码重置成功，请重新登录');
-  // try {
-  //   loading.value = true;
-  //   const response = await userApi.login({
-  //     phone: phone.value,
-  //     password: password.value
-  //   });
+  try {
+    loading.value = true;
+    const response = await userApi.login({
+      phone: phone.value,
+      password: password.value
+    });
     
-  //   if (response.success) {
-  //     // 保存token和用户信息
-  //     localStorage.setItem('token', response.data?.token || '');
-  //     localStorage.setItem('user', JSON.stringify(response.data?.user || {}));
-  //     toast.success('登录成功');
-  //     // 检查是否有重定向URL
-  //     const redirectUrl = localStorage.getItem('redirectUrl');
-  //     if (redirectUrl) {
-  //       // 清除重定向URL
-  //       localStorage.removeItem('redirectUrl');
-  //       // 跳转到重定向URL
-  //       window.location.href = redirectUrl;
-  //     } else {
-  //       // 跳转到首页
-  //       router.push('/home');
-  //     }
-  //   } else {
-  //     toast.error(response.message || '登录失败');
-  //   }
-  // } catch (error: any) {
-  //   toast.error(error.message || '登录失败');
-  // } finally {
-  //   loading.value = false;
-  // }
+    if (response.success) {
+      // 保存token和用户信息
+      localStorage.setItem('token', response.data?.token || '');
+      localStorage.setItem('user', JSON.stringify(response.data?.user || {}));
+      toast.success('登录成功');
+      // 检查是否有重定向URL
+      const redirectUrl = localStorage.getItem('redirectUrl');
+      if (redirectUrl) {
+        // 清除重定向URL
+        localStorage.removeItem('redirectUrl');
+        // 跳转到重定向URL
+        window.location.href = redirectUrl;
+      } else {
+        // 跳转到首页
+        router.push('/home');
+      }
+    } else {
+      toast.error(response.message || '登录失败');
+    }
+  } catch (error: any) {
+    toast.error(error.message || '登录失败');
+  } finally {
+    loading.value = false;
+  }
 };
 </script>
 
