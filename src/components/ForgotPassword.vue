@@ -77,7 +77,8 @@ const handleForgotPassword = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f5f5f5;
+  background: url('../assets/login-banner.jpeg') no-repeat center center;
+  background-size: cover;
 }
 
 .forgot-password-form {
