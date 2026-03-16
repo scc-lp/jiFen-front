@@ -22,6 +22,7 @@
         </div>
       </van-form>
     </div>
+    <van-button type="primary" style="margin-top: 20px;width: 90%;" @click="switchToChat">智能聊天</van-button>
   </div>
 </template>
 
@@ -45,6 +46,11 @@ const switchToRegister = () => {
 // 切换到忘记密码页面
 const switchToForgotPassword = () => {
   router.push('/forgot-password');
+};
+
+// 切换到聊天页面
+const switchToChat = () => {
+  router.push('/chat');
 };
 
 // 防抖函数
@@ -121,6 +127,7 @@ const handleLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
   background: url('../assets/login-banner.jpeg') no-repeat center center;
   background-size: cover;
 }

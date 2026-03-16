@@ -24,6 +24,12 @@ const routes = [
     meta: { title: '忘记密码' }
   },
   {
+    path: '/chat',
+    name: 'Chat',
+    component: () => import('../views/Chat.vue'),
+    meta: { title: '聊天' }
+  },
+  {
     path: '/home',
     name: 'Home',
     component: () => import('../views/Home.vue'),
