@@ -95,18 +95,24 @@ const handleSend = async () => {
     messages.value.push({ role: 'bot', content: '' });
 
     // 使用封装的API方法
-    await chatApi.sendMessageWithCallback(message, (content, isDone) => {
-      if (content) {
+    await chatApi.sendMessageWithCallback(message, (content) => {
+      if (content && botMessageIndex < messages.value.length) {
         // 更新机器人消息
-        messages.value[botMessageIndex].content += content;
-        scrollToBottom();
+        const botMessage = messages.value[botMessageIndex];
+        if (botMessage) {
+          botMessage.content += content;
+          scrollToBottom();
+        }
       }
     });
   } catch (error: any) {
     toast.error(error.message || '发送消息失败');
     // 移除最后一条消息（机器人占位）
-    if (messages.value.length > 0 && messages.value[messages.value.length - 1].role === 'bot') {
-      messages.value.pop();
+    if (messages.value.length > 0) {
+      const lastMessage = messages.value[messages.value.length - 1];
+      if (lastMessage && lastMessage.role === 'bot') {
+        messages.value.pop();
+      }
     }
   } finally {
     isLoading.value = false;
