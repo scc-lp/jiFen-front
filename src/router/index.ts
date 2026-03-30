@@ -3,16 +3,22 @@ import { createRouter, createWebHashHistory } from 'vue-router';
 const routes = [
   {
     path: '/',
-    redirect: '/login'
+    redirect: '/landing'
   },
   {
-    path: '/login',
+    path: '/landing',
+    name: 'Landing',
+    component: () => import('../views/Landing.vue'),
+    meta: { title: '欢迎页' }
+  },
+  {
+    path: '/login-test',
     name: 'Login',
     component: () => import('../components/Login.vue'),
     meta: { title: '登录' }
   },
   {
-    path: '/register',
+    path: '/register-test',
     name: 'Register',
     component: () => import('../components/Register.vue'),
     meta: { title: '注册' }
@@ -87,7 +93,7 @@ router.beforeEach((to, _from, next) => {
       // 未登录，保存当前URL，然后跳转到登录页
       const currentUrl = window.location.href;
       localStorage.setItem('redirectUrl', currentUrl);
-      next('/login');
+      next('/landing');
     }
   } else {
     // 对于不需要认证的页面，如果已经登录，跳转到首页
