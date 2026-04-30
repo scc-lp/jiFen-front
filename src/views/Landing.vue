@@ -2,7 +2,7 @@
   <div class="profile-container">
     <div class="content">
       <h2 class="title">个人技术笔记</h2>
-      <div class="placeholder-box">
+      <div class="placeholder-box" @click="toLogin">
         <p>项目正在开发中...</p>
       </div>
     </div>
@@ -28,6 +28,14 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue';
+import {useRouter} from 'vue-router';
+
+const router = useRouter();
+
+
+function toLogin(){
+  router.push({ name: 'Login' });
+}
 
 onMounted(() => {
   // 确保页面标题和备案名称一致
