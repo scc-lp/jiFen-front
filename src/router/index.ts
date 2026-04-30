@@ -3,7 +3,7 @@ import { createRouter, createWebHashHistory } from 'vue-router';
 const routes = [
   {
     path: '/',
-    redirect: '/landing'
+    redirect: '/login'
   },
   {
     path: '/landing',
@@ -12,13 +12,13 @@ const routes = [
     meta: { title: '欢迎页' }
   },
   {
-    path: '/login-test',
+    path: '/login',
     name: 'Login',
     component: () => import('../components/Login.vue'),
     meta: { title: '登录' }
   },
   {
-    path: '/register-test',
+    path: '/register',
     name: 'Register',
     component: () => import('../components/Register.vue'),
     meta: { title: '注册' }
